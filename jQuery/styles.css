@@ -1,0 +1,9 @@
+body{
+    background-color: skyblue;
+}
+
+.big-title{
+    font-size: 10rem;
+    color: yellow;
+    font-family: Georgia, 'Times New Roman', Times, serif;
+}
