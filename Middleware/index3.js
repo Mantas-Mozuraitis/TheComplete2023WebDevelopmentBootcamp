@@ -3,6 +3,12 @@ import express from "express";
 const app = express();
 const port = 3000;
 
+// Logger middlewear funciton
+function logger(req, res, next){
+  console.log("Request moethod: ",req.method);
+  console.log("Url moethod: ",req.url);
+  next();
+}
 app.use(logger);
 
 app.get("/", (req, res) => {
