@@ -9,7 +9,7 @@ const db = new pg.Client({
   user: "postgres",
   host: "localhost",
   database: "world",
-  password: "123456",
+  password: "password",
   port: 5432,
 });
 db.connect();
@@ -25,7 +25,7 @@ let users = [
 ];
 
 async function checkVisisted() {
-  const result = await db.query("SELECT country_code FROM visited_countries");
+  const result = await db.query("SELECT country_code FROM visited_countries WHERE user_id = ($1)", [currentUserId]);
   let countries = [];
   result.rows.forEach((country) => {
     countries.push(country.country_code);
@@ -38,7 +38,7 @@ app.get("/", async (req, res) => {
     countries: countries,
     total: countries.length,
     users: users,
-    color: "teal",
+    color: users[currentUserId-1].color,
   });
 });
 app.post("/add", async (req, res) => {
