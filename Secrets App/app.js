@@ -22,10 +22,28 @@ app.get("/", (req,res)=>{
     res.render("home.ejs");
 })
 
+// LOGIN ROUTES
 app.get("/login", (req,res)=>{
     res.render("login.ejs");
 })
+app.post("/login", async (req,res)=>{
+    try {
+        const user = await db.query("SELECT * FROM users WHERE email = $1", [req.body.username]);
+        if (user.rowCount>0) {
+            user.rows[0].password === req.body.password
+            ?res.render("secrets.ejs")
+            :console.log("Password is incorrect"), res.redirect("/login");
+        } else{
+            console.log("user does not exist");
+            res.redirect("/login");
+        }
+    } catch (error) {
+        console.error("Error: ", error.message);
+    }
+})
 
+
+// REGISTER ROUTES
 app.get("/register", (req,res)=>{
     res.render("register.ejs");
 })
