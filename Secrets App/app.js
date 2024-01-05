@@ -33,7 +33,7 @@ app.post("/register", async (req,res)=>{
     try {
         await db.query("INSERT INTO users (email, password) VALUES ($1, $2)", [req.body.username, req.body.password]);
         console.log("new user has been created");
-        res.redirect("/");
+        res.render("secrets.ejs");
     } catch (error) {
         console.error("Error:", error.message);
     }
