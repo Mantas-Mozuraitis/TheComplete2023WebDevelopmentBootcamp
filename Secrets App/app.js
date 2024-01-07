@@ -1,4 +1,8 @@
 //jshint esversion:6
+import dotenv from "dotenv"
+const env = dotenv;
+env.config();
+
 import express from "express"
 import bodyParser from "body-parser"
 import pg from "pg"
@@ -14,7 +18,8 @@ const db = new pg.Client({
     port: 5432,
 })
 db.connect();
-const secret = "ThisIsMyLittleSecret!..%$5edkf"
+
+const secret = process.env.SECRET;
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
