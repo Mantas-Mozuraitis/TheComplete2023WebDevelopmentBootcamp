@@ -94,6 +94,15 @@ app.post("/register", (req,res)=>{
     })
 })
 
+// LOGOUT ROUTE
+app.get('/logout', (req, res, next)=>{
+    req.logout((err)=>{
+      if (err) { return next(err); }
+      res.redirect('/');
+    });
+  });
+
+// SECRETES ROUTE FOR AUTHENTICATED USERS
 app.get("/secrets", (req,res)=>{
     if(req.isAuthenticated()){
         res.render("secrets.ejs");
