@@ -63,7 +63,7 @@ app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 
 app.get("/", (req,res)=>{
-    res.render("home.ejs");
+    req.isAuthenticated()?res.redirect("/secrets"):res.render("home.ejs");
 })
 
 // LOGIN ROUTES
