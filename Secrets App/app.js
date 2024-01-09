@@ -11,7 +11,6 @@ import passport from "passport"
 import LocalStrategy from "passport-local"
 import bcrypt from "bcrypt"
 import GooglePassport from "passport-google-oauth20"
-import FacebookPassport from "passport-facebook"
 
 const app = express();
 const port = 3000;
@@ -71,7 +70,6 @@ passport.use(new GoogleStrategy({
   },
   function(accessToken, refreshToken, profile, cb) {
     db.query("SELECT * FROM users WHERE google_id = $1", [profile.id], (error,result)=>{
-        console.log(result.rows.length);
         if(error){ 
             return cb(error);
         }
@@ -82,16 +80,12 @@ passport.use(new GoogleStrategy({
                 if (error) {
                     return cb(error);
                 }
-                return cb(null,insertResult.rows[0]);
+                return cb(null,false);
             })
         }
     })
   }
 ));
-
-const FacebookStrategy = FacebookPassport.Strategy; 
-
-
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
@@ -113,9 +107,9 @@ app.get("/auth/google", (req, res) => {
     passport.authenticate("google", { scope: ["profile"] })(req, res);
 });
 app.get("/auth/google/secrets", 
-  passport.authenticate('google', { failureRedirect: '/login' }),
+  passport.authenticate("google", { failureRedirect: "/login" }),
   function(req, res) {
-    res.redirect('/');
+    res.redirect("/secrets");
   });
 
 
@@ -146,16 +140,45 @@ app.get('/logout', (req, res, next)=>{
     });
   });
 
-// SECRETES ROUTE FOR AUTHENTICATED USERS
-app.get("/secrets", (req,res)=>{
+// SECRETES ROUTES 
+app.get("/secrets", async (req,res)=>{
     if(req.isAuthenticated()){
-        res.render("secrets.ejs");
+        const secrets = await getSecrets();
+        res.render("secrets.ejs", {secrets:secrets});
     }else{
         res.redirect("/login");
+    }
+})
+
+app.get("/submit", (req,res)=>{
+    if(req.isAuthenticated()){
+        res.render("submit.ejs");
+    }else{
+        res.redirect("/");
+    }
+})
+app.post("/submit", async (req, res)=>{
+    try {
+        await db.query("INSERT INTO secrets (user_id, secret) VALUES ($1,$2)", [req.user.id, req.body.secret]);
+        res.redirect("/");
+    } catch (error) {
+        console.error("Error: ", error.message);
     }
 })
 
 app.listen(port, ()=>{
     console.log(`Server is listening on port ${port}`);
 })
+ 
 
+// FUNCTIONS
+
+async function getSecrets(){
+    try {
+        const secrets = await db.query("SELECT secret FROM secrets"); 
+        return secrets;
+    } catch (error) {
+        console.error("Error: ", error.message);
+        return null;
+    }
+}
