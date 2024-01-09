@@ -11,6 +11,7 @@ import passport from "passport"
 import LocalStrategy from "passport-local"
 import bcrypt from "bcrypt"
 import GooglePassport from "passport-google-oauth20"
+import FacebookPassport from "passport-facebook"
 
 const app = express();
 const port = 3000;
@@ -87,6 +88,10 @@ passport.use(new GoogleStrategy({
     })
   }
 ));
+
+const FacebookStrategy = FacebookPassport.Strategy; 
+
+
 
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
