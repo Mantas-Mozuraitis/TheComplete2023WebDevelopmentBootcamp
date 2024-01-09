@@ -1,4 +1,4 @@
-//jshint esversion:6
+
 import dotenv from "dotenv"
 const env = dotenv;
 env.config();
@@ -10,6 +10,7 @@ import session from "express-session"
 import passport from "passport"
 import LocalStrategy from "passport-local"
 import bcrypt from "bcrypt"
+import GooglePassport from "passport-google-oauth20"
 
 const app = express();
 const port = 3000;
@@ -36,7 +37,7 @@ passport.use(new LocalStrategy(
     function verify(username, password, done) {
         db.query('SELECT * FROM users WHERE username = $1', [username], function (error, user){
             if (error) {return done(error);}
-            if (!user) {return done(null, false, {message: 'User does not exist'});}
+            if (user.rows.length === 0) {return done(null, false, {message: 'User does not exist'});}
             user = user.rows[0];
             bcrypt.compare(password, user.password, function(error, passwordMatch){
                 if (error) {return done(error);}
@@ -59,6 +60,34 @@ passport.deserializeUser(function(user, done) {
     });
   });
 
+const GoogleStrategy = GooglePassport.Strategy;
+
+passport.use(new GoogleStrategy({
+    clientID: process.env.CLIENT_ID,
+    clientSecret: process.env.CLIENT_SECRET,
+    callbackURL: "http://localhost:3000/auth/google/secrets",
+    userProfileURL: "https://www.googleapis.com/oauth2/v3/userinfo"
+  },
+  function(accessToken, refreshToken, profile, cb) {
+    db.query("SELECT * FROM users WHERE google_id = $1", [profile.id], (error,result)=>{
+        console.log(result.rows.length);
+        if(error){ 
+            return cb(error);
+        }
+        if (result.rows.length > 0) {
+            return cb(null, result.rows[0]);
+        }else{
+            db.query("INSERT INTO users (google_id) VALUES ($1)", [profile.id], (error, insertResult)=>{
+                if (error) {
+                    return cb(error);
+                }
+                return cb(null,insertResult.rows[0]);
+            })
+        }
+    })
+  }
+));
+
 app.use(express.static("public"));
 app.use(bodyParser.urlencoded({extended:true}));
 
@@ -74,6 +103,16 @@ app.post("/login", passport.authenticate('local', { failureRedirect: '/login' })
 (req, res)=>{
   res.redirect("/secrets");
 })
+
+app.get("/auth/google", (req, res) => {
+    passport.authenticate("google", { scope: ["profile"] })(req, res);
+});
+app.get("/auth/google/secrets", 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  function(req, res) {
+    res.redirect('/');
+  });
+
 
 // REGISTER ROUTES
 app.get("/register", (req,res)=>{
